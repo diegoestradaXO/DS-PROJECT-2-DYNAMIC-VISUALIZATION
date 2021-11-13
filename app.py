@@ -4,9 +4,15 @@ import dash_html_components as html
 import dash_core_components as dcc
 import datetime
 from dash.dependencies import Input, Output, State
+from tensorflow import keras
 
+
+
+
+myModel = keras.models.load_model("model.h5") 
+
+# ================== App logic =======================
 UVG_LOGO = 'https://altiplano.uvg.edu.gt/admisiones/images/logo_uvgadmin.png'
-
 app = dash.Dash(
     external_stylesheets=[dbc.themes.DARKLY]
 )
@@ -22,8 +28,7 @@ navbar = dbc.Navbar(
                     align="center",
                     className="g-0",
                 ),
-            dbc.NavItem(dbc.NavLink("Predicción", href="#", style={'color':'white'})),
-            dbc.NavItem(dbc.NavLink("Gráficas y Reportes", href="#", style={'color':'white'})),
+           
         ],
         
     ),
@@ -33,12 +38,13 @@ navbar = dbc.Navbar(
 
 app.layout = html.Div([
     navbar,
-    html.Div([
-        dcc.Upload(
+    html.H1('Modelo Xception de Keras', style={'text-align':'center','margin-top':'10px'}),
+    html.Div([ # Horizontal flexbox va aquí
+        dcc.Upload( #Elemento para subir imagenes
         id='upload-image',
         children=html.Div([
             'Drag and Drop or ',
-            html.A('Select Files', style={'text-decoration': 'underline'})
+            html.A('Select File', style={'text-decoration': 'underline'})
         ]),
         style={
             'width': '100%',
@@ -48,16 +54,26 @@ app.layout = html.Div([
             'borderStyle': 'dashed',
             'borderRadius': '5px',
             'textAlign': 'center',
-            'margin': '10px'
+            'margin': '10px',
+            'min-width':'216px'
         },
         # Allow multiple files to be uploaded
         multiple=True
     ),
-        html.Div(id='output-image-upload'),
+        html.Div([
+            html.H5('Tu imagen', style={'text-align':'center'}),
+            html.Hr(),
+            html.Div(id='output-image-upload',style={'max-width':'100%','max-height':'100%'}), #Mostrar la imagen subida
+        ],style={'display':'flex','flex-direction':'column'}),
+        html.Div([
+            html.H5('prediction here!'),
+            html.Hr()
+        ])
         ],
          style={'width':'100%',
                 'display':'flex',
                 'flex-direction':'row',
+                'flex-wrap':'wrap',
                 'justify-content':'space-around',
                 'margin-top':'50px'
          }

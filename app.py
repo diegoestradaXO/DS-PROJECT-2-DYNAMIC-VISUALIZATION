@@ -5,11 +5,18 @@ import dash_core_components as dcc
 import datetime
 from dash.dependencies import Input, Output, State
 from tensorflow import keras
+from keras.preprocessing import image
+import numpy as np
 
 
-
+IMG_SIZE = 299
 
 myModel = keras.models.load_model("model.h5") 
+# test_image = image.load_img('000a312787f2.jpg', target_size=(IMG_SIZE, IMG_SIZE))
+# test_image = image.img_to_array(test_image)
+# test_image = np.expand_dims(test_image, axis=0)
+# prediction = myModel.predict(test_image)
+# print(prediction[0])
 
 # ================== App logic =======================
 UVG_LOGO = 'https://altiplano.uvg.edu.gt/admisiones/images/logo_uvgadmin.png'
@@ -67,7 +74,8 @@ app.layout = html.Div([
         ],style={'display':'flex','flex-direction':'column'}),
         html.Div([
             html.H5('prediction here!'),
-            html.Hr()
+            html.Hr(),
+            html.Div(id='final-prediction', children=["Sube una img"]),
         ])
         ],
          style={'width':'100%',
@@ -103,6 +111,33 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
             parse_contents(c, n, d) for c, n, d in
             zip(list_of_contents, list_of_names, list_of_dates)]
         return children
+
+@app.callback(Output('final-prediction', 'children'),
+              Input('upload-image', 'filename'))
+
+def make_prediction(filename):
+    # print(filename[0])
+    # if filename is None:
+    #     raise dash.exceptions.PreventUpdate
+    if(len(filename[0])>0):
+        print(filename[0])
+        test_image = image.load_img(filename[0], target_size=(IMG_SIZE, IMG_SIZE))
+        test_image = image.img_to_array(test_image)
+        test_image = np.expand_dims(test_image, axis=0)
+        prediction = myModel.predict(test_image)
+        print(prediction[0])
+        if(prediction[0][0]==1):
+            return 'Apariencia atípica de COVID 19'
+        elif(prediction[0][1]==1):
+            return 'Apariencia indeterminada de COVID 19'
+        elif(prediction[0][2]==1):
+            return 'Negativo para COVID 19'
+        elif(prediction[0][3]==1):
+            return 'Apariencia típica de COVID19'
+        
+    elif(len(filename[0]<0)):
+        raise dash.exceptions.PreventUpdate
+    
 
 if __name__ == "__main__":
     app.run_server()

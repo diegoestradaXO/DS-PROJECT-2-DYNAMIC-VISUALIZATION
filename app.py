@@ -12,7 +12,7 @@ import numpy as np
 IMG_SIZE = 299
 
 myModel = keras.models.load_model("model.h5") 
-# test_image = image.load_img('000a312787f2.jpg', target_size=(IMG_SIZE, IMG_SIZE))
+# test_image = image.load_img('0026720152f5.jpg', target_size=(IMG_SIZE, IMG_SIZE))
 # test_image = image.img_to_array(test_image)
 # test_image = np.expand_dims(test_image, axis=0)
 # prediction = myModel.predict(test_image)
@@ -45,13 +45,13 @@ navbar = dbc.Navbar(
 
 app.layout = html.Div([
     navbar,
-    html.H1('Modelo Xception de Keras', style={'text-align':'center','margin-top':'10px'}),
+    html.H1('Modelo Xception de Keras', style={'text-align':'center','margin-top':'45px'}),
     html.Div([ # Horizontal flexbox va aquí
         dcc.Upload( #Elemento para subir imagenes
         id='upload-image',
         children=html.Div([
             'Drag and Drop or ',
-            html.A('Select File', style={'text-decoration': 'underline'})
+            html.A('Select File 📤', style={'text-decoration': 'underline'})
         ]),
         style={
             'width': '100%',
@@ -68,14 +68,14 @@ app.layout = html.Div([
         multiple=True
     ),
         html.Div([
-            html.H5('Tu imagen', style={'text-align':'center'}),
+            html.H5('Tu imagen 📷', style={'text-align':'center'}),
             html.Hr(),
             html.Div(id='output-image-upload',style={'max-width':'100%','max-height':'100%'}), #Mostrar la imagen subida
         ],style={'display':'flex','flex-direction':'column'}),
         html.Div([
-            html.H5('prediction here!'),
+            html.H5('Predicción final ✔️'),
             html.Hr(),
-            html.Div(id='final-prediction', children=["Sube una img"]),
+            html.Div(id='final-prediction', children=["- sube una imagen para obtener tu predicción -"]),
         ])
         ],
          style={'width':'100%',
@@ -85,9 +85,34 @@ app.layout = html.Div([
                 'justify-content':'space-around',
                 'margin-top':'50px'
          }
-        )
+        ), html.H1('Análisis Exploratorio', style={'text-align':'center','margin-top':'45px'}),
+        html.Div([
+            html.Div(html.Img(src='assets/siim.jpg', style={'max-width':'600px'}),),
+            html.Div(html.P('''
+            Lorem Ipsum is simply dummy text of the printing and typesetting 
+            industry. Lorem Ipsum has been the industry's standard dummy text ever since the 
+            1500s, when an unknown printer took a galley of type and scrambled it to make a type 
+            specimen book. It has survived not only five centuries, but also the leap into electronic 
+            typesetting, remaining essentially unchanged. It was popularised in the 1960s with the
+             release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop 
+             publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+            '''
+            ,style={'margin':'30px'})),
+        ], style={'display':'flex',
+                  'flex-direction':'row',
+                  'margin':'30px',
+                #   'flex-wrap':'wrap'
+                }
+        
+        
+        ),
+        
     
-])
+], style={'display':'flex',
+          'flex-direction':'column'
+        }
+
+)
 
 def parse_contents(contents, filename, date):
     return html.Div([

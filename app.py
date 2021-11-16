@@ -11,7 +11,8 @@ import numpy as np
 
 IMG_SIZE = 299
 
-myModel = keras.models.load_model("model.h5") 
+myModel_xception = keras.models.load_model("xception.h5") 
+myModel_yolo = keras.models.load_model("yolo.h5") 
 # test_image = image.load_img('0026720152f5.jpg', target_size=(IMG_SIZE, IMG_SIZE))
 # test_image = image.img_to_array(test_image)
 # test_image = np.expand_dims(test_image, axis=0)
@@ -45,7 +46,7 @@ navbar = dbc.Navbar(
 
 app.layout = html.Div([
     navbar,
-    html.H1('Modelo Xception de Keras', style={'text-align':'center','margin-top':'45px'}),
+    html.H1('Modelos predictivos', style={'text-align':'center','margin-top':'45px'}),
     html.Div([ # Horizontal flexbox va aquí
         dcc.Upload( #Elemento para subir imagenes
         id='upload-image',
@@ -74,8 +75,18 @@ app.layout = html.Div([
         ],style={'display':'flex','flex-direction':'column'}),
         html.Div([
             html.H5('Predicción final ✔️'),
+            dcc.Checklist(
+                options=[
+                    {'label': 'Xception Model', 'value': 'x'},
+                    {'label': 'YoloV5 Model', 'value': 'y'},
+                ],
+                id='models',
+                value=['x', 'y'],
+                labelStyle={'display': 'inline-block', 'margin': '10px', 'justify-content': 'space-around', 'min-width': '20px', 'margin-bottom': '5px'}
+            ),
             html.Hr(),
-            html.Div(id='final-prediction', children=["- sube una imagen para obtener tu predicción -"]),
+            html.Div(id='final-prediction-xception', children=["Xception: - sube una imagen para obtener tu predicción-"]),
+            html.Div(id='final-prediction-yolo', children=["YoloV5: - sube una imagen para obtener tu predicción-"]),
         ])
         ],
          style={'width':'100%',
@@ -137,10 +148,43 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
             zip(list_of_contents, list_of_names, list_of_dates)]
         return children
 
-@app.callback(Output('final-prediction', 'children'),
-              Input('upload-image', 'filename'))
+@app.callback(Output('final-prediction-xception', 'children'),
+              Input('upload-image', 'filename'),
+              Input('models', 'value'))
 
-def make_prediction(filename):
+def make_prediction_xception(filename, value):
+    # print(filename[0])
+    # if filename is None:
+    #     raise dash.exceptions.PreventUpdate
+    print (myModel_xception.evaluate(x,y))
+    if(not 'x' in value):
+        return ("Xception está desactivado")
+    if(len(filename[0])>0):
+        print(filename[0])
+        test_image = image.load_img(filename[0], target_size=(IMG_SIZE, IMG_SIZE))
+        test_image = image.img_to_array(test_image)
+        test_image = np.expand_dims(test_image, axis=0)
+        prediction = myModel_xception.predict(test_image)
+        print(prediction[0])
+        if(prediction[0][0]==1):
+            return 'Xception: Apariencia atípica de COVID 19'
+        elif(prediction[0][1]==1):
+            return 'Xception: Apariencia indeterminada de COVID 19'
+        elif(prediction[0][2]==1):
+            return 'Xception: Negativo para COVID 19'
+        elif(prediction[0][3]==1):
+            return 'Xception: Apariencia típica de COVID19'
+        
+    elif(len(filename[0]<0)):
+        raise dash.exceptions.PreventUpdate
+
+@app.callback(Output('final-prediction-yolo', 'children'),
+              Input('upload-image', 'filename'),
+              Input('models', 'value'))
+
+def make_prediction_yolo(filename, value):
+    if(not 'y' in value):
+        return ("YoloV5 está desactivado")
     # print(filename[0])
     # if filename is None:
     #     raise dash.exceptions.PreventUpdate
@@ -149,20 +193,20 @@ def make_prediction(filename):
         test_image = image.load_img(filename[0], target_size=(IMG_SIZE, IMG_SIZE))
         test_image = image.img_to_array(test_image)
         test_image = np.expand_dims(test_image, axis=0)
-        prediction = myModel.predict(test_image)
+        prediction = myModel_yolo.predict(test_image)
         print(prediction[0])
         if(prediction[0][0]==1):
-            return 'Apariencia atípica de COVID 19'
+            return 'YoloV5: Apariencia atípica de COVID 19'
         elif(prediction[0][1]==1):
-            return 'Apariencia indeterminada de COVID 19'
+            return 'YoloV5: Apariencia indeterminada de COVID 19'
         elif(prediction[0][2]==1):
-            return 'Negativo para COVID 19'
+            return 'YoloV5: Negativo para COVID 19'
         elif(prediction[0][3]==1):
-            return 'Apariencia típica de COVID19'
+            return 'YoloV5: Apariencia típica de COVID19'
         
     elif(len(filename[0]<0)):
         raise dash.exceptions.PreventUpdate
-    
+        
 
 if __name__ == "__main__":
     app.run_server()

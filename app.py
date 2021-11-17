@@ -156,7 +156,6 @@ def make_prediction_xception(filename, value):
     # print(filename[0])
     # if filename is None:
     #     raise dash.exceptions.PreventUpdate
-    print (myModel_xception.evaluate(x,y))
     if(not 'x' in value):
         return ("Xception está desactivado")
     if(len(filename[0])>0):

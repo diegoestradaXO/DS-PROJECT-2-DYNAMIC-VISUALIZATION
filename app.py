@@ -1,3 +1,4 @@
+from os import name
 import dash
 import datetime
 import numpy as np
@@ -8,8 +9,10 @@ import dash_html_components as html
 from keras.preprocessing import image
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
+import pandas as pd
 
 IMG_SIZE = 299
+hist = pd.read_csv('hist.csv')
 
 myModel_xception = keras.models.load_model("xception.h5") 
 myModel_yolo = keras.models.load_model("yolo.h5") 
@@ -18,6 +21,8 @@ myModel_yolo = keras.models.load_model("yolo.h5")
 # test_image = np.expand_dims(test_image, axis=0)
 # prediction = myModel.predict(test_image)
 # print(prediction[0])
+
+fig = go.Figure(data=[go.Scatter(x=hist['epoch'], y=hist['categorical_accuracy'], name='Categorical Accuracy'), go.Scatter(x=hist['epoch'], y=hist['val_categorical_accuracy'], name='Validation Categorical  Accuracy')], layout={'title': {'text':'Precisión del modelo Xception a lo largo del ajuste'}})
 
 # ================== App logic =======================
 UVG_LOGO = 'https://altiplano.uvg.edu.gt/admisiones/images/logo_uvgadmin.png'
@@ -138,8 +143,9 @@ app.layout = html.Div([
                         html.H5('Xception'),
                         html.P("",style={'margin':'30px'}, id="accuracy_text_xception"),
                         dcc.Graph(figure=excpetion_fig,id="accuracy_graph_xception"),
+                        dcc.Graph(figure=fig, style={'margin-top': '20px'})
                     ], style={
-                        'width': '500px',
+                        'width': '660px',
                         'margin':'30px'
                     }),
                     html.Div([
@@ -154,7 +160,7 @@ app.layout = html.Div([
                   'display':'flex',
                   'flex-direction':'row',
                   'margin':'30px',
-                  'width':'100%',
+                  'width':'auto',
                   'align-items': 'center',
                   'justify-content': 'center'
                 })

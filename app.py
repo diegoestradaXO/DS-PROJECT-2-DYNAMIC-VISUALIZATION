@@ -228,7 +228,7 @@ def iteration_graph_value_yolo(value):
     return go.Figure(data=[go.Scatter(x=epoc, y=accuaracy_yolo(epoc))])
 """
 
-@app.callback(Output('accuracy_text_xception', 'figure'),
+@app.callback(Output('accuracy_text_xception', 'children'),
               Input('iterations', 'value'))
 def iteration_text_value_xception(value):
     return "Con {} iteraciones Xception tiene una efectividad de {}".format(value, accuaracy_xception(value))

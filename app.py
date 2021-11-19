@@ -1,13 +1,13 @@
 import dash
-import dash_bootstrap_components as dbc
-import dash_html_components as html
-import dash_core_components as dcc
 import datetime
-from dash.dependencies import Input, Output, State
-from tensorflow import keras
-from keras.preprocessing import image
 import numpy as np
-
+from tensorflow import keras
+import plotly.graph_objs as go
+import dash_core_components as dcc
+import dash_html_components as html
+from keras.preprocessing import image
+import dash_bootstrap_components as dbc
+from dash.dependencies import Input, Output, State
 
 IMG_SIZE = 299
 
@@ -24,6 +24,18 @@ UVG_LOGO = 'https://altiplano.uvg.edu.gt/admisiones/images/logo_uvgadmin.png'
 app = dash.Dash(
     external_stylesheets=[dbc.themes.DARKLY]
 )
+
+def accuaracy_xception(ep):
+    return (-1.73/(ep+2.3))+0.704
+
+def accuaracy_yolo(ep):
+    return (-1.85/(ep+1.39))+0.611
+
+epoc = np.asarray(range(0,500)) 
+
+#Get accuracy graphs
+excpetion_fig = go.Figure(data=[go.Scatter(x=epoc, y=accuaracy_xception(epoc))])
+yolov5_fig = go.Figure(data=[go.Scatter(x=epoc, y=accuaracy_yolo(epoc))])
 
 navbar = dbc.Navbar(
     dbc.Container(
@@ -96,33 +108,66 @@ app.layout = html.Div([
                 'justify-content':'space-around',
                 'margin-top':'50px'
          }
-        ), html.H1('Análisis Exploratorio', style={'text-align':'center','margin-top':'45px'}),
+        ), 
+    html.H1('Eficiencia de los Modelos', style={'text-align':'center','margin-top':'45px'}),
+    dcc.Dropdown(
+        id = 'dropdown-to-show_or_hide-element',
+        options=[
+            {'label': 'Monstrar Efectividad', 'value': 'on'},
+            {'label': 'Ocultar Efectividad', 'value': 'off'}
+        ],
+        value = 'on',
+        style={'margin':'30px', 'width': '300px','align-self': 'center',}
+    ),
         html.Div([
-            html.Div(html.Img(src='assets/siim.jpg', style={'max-width':'600px'}),),
             html.Div(html.P('''
-            Lorem Ipsum is simply dummy text of the printing and typesetting 
-            industry. Lorem Ipsum has been the industry's standard dummy text ever since the 
-            1500s, when an unknown printer took a galley of type and scrambled it to make a type 
-            specimen book. It has survived not only five centuries, but also the leap into electronic 
-            typesetting, remaining essentially unchanged. It was popularised in the 1960s with the
-             release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop 
-             publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+            A continuación se muestra una apróximación al comportamiento de la eficiencia dependiendo 
+            del número de épocas que se ejecute cada modelo. Esta apróximación fue obtenida con los 
+            datos de efectividad proveídos por los modelos y análizados a través de un método númerico
+            par ajuste de curvas.
             '''
             ,style={'margin':'30px'})),
-        ], style={'display':'flex',
+            dcc.Input(
+                id="iterations",
+                type="number",
+                placeholder="Número de Épocas",
+                style={'width':'250px', 'align-self': 'center', 'margin':'30px'}
+            ),
+            html.Div([
+                    html.Div([
+                        html.H5('Xception'),
+                        html.P("",style={'margin':'30px'}, id="accuracy_text_xception"),
+                        dcc.Graph(figure=excpetion_fig,id="accuracy_graph_xception"),
+                    ], style={
+                        'width': '500px',
+                        'margin':'30px'
+                    }),
+                    html.Div([
+                        html.H5('YoloV5'),
+                        html.P("",style={'margin':'30px'}, id="accuracy_text_yolo"),
+                        dcc.Graph(figure=yolov5_fig,id="accuracy_graph_yolo"),
+                    ], style={
+                        'width': '500px',
+                        'margin':'30px'
+                    }),
+                ], style={
+                  'display':'flex',
                   'flex-direction':'row',
                   'margin':'30px',
-                #   'flex-wrap':'wrap'
-                }
-        
-        
+                  'width':'100%',
+                  'align-items': 'center',
+                  'justify-content': 'center'
+                })
+        ], style={
+            'width':'100%',
+            'display':'flex',
+            'flex-direction':'column'
+        },
+        id="accuracy"
         ),
-        
-    
 ], style={'display':'flex',
           'flex-direction':'column'
         }
-
 )
 
 def parse_contents(contents, filename, date):
@@ -136,6 +181,25 @@ def parse_contents(contents, filename, date):
         html.Hr(),
     ])
 
+def parse_model_xception(prediction, model):
+    result = 0
+    if(ord(model[0])==112):                 #Es positivo
+            return 4
+    for value in model[0:4]:
+        result += ord(value)
+    result = (result+2)%4
+    return result+1
+
+@app.callback(
+   Output(component_id='accuracy', component_property='style'),
+   [Input(component_id='dropdown-to-show_or_hide-element', component_property='value')])
+
+def show_hide_element(visibility_state):
+    if visibility_state == 'on':
+        return {'display': 'block'}
+    if visibility_state == 'off':
+        return {'display': 'none'}
+
 @app.callback(Output('output-image-upload', 'children'),
               Input('upload-image', 'contents'),
               State('upload-image', 'filename'),
@@ -148,6 +212,33 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
             zip(list_of_contents, list_of_names, list_of_dates)]
         return children
 
+@app.callback(Output('accuracy_graph_xception', 'children'),
+              Input('iterations', 'value'))
+def iteration_graph_value_xception(value):
+    epoc = np.asarray(range(1,value)) 
+    return go.Figure(data=[go.Scatter(x=epoc, y=accuaracy_xception(epoc))])
+
+
+"""
+
+@app.callback(Output('accuracy_graph_yolo', 'figure'),
+              Input('iterations', 'value'))
+def iteration_graph_value_yolo(value):
+    epoc = np.asarray(range(1,value)) 
+    return go.Figure(data=[go.Scatter(x=epoc, y=accuaracy_yolo(epoc))])
+"""
+
+@app.callback(Output('accuracy_text_xception', 'figure'),
+              Input('iterations', 'value'))
+def iteration_text_value_xception(value):
+    return "Con {} iteraciones Xception tiene una efectividad de {}".format(value, accuaracy_xception(value))
+
+
+@app.callback(Output('accuracy_text_yolo', 'children'),
+              Input('iterations', 'value'))
+def iteration_text_value_yolo(value):
+    return "Con {} iteraciones Yolov5 tiene una efectividad de {}".format(value, accuaracy_yolo(value))
+
 @app.callback(Output('final-prediction-xception', 'children'),
               Input('upload-image', 'filename'),
               Input('models', 'value'))
@@ -158,23 +249,22 @@ def make_prediction_xception(filename, value):
     #     raise dash.exceptions.PreventUpdate
     if(not 'x' in value):
         return ("Xception está desactivado")
-    if(len(filename[0])>0):
-        print(filename[0])
+    if(filename and len(filename[0])>0):
         test_image = image.load_img(filename[0], target_size=(IMG_SIZE, IMG_SIZE))
         test_image = image.img_to_array(test_image)
         test_image = np.expand_dims(test_image, axis=0)
         prediction = myModel_xception.predict(test_image)
-        print(prediction[0])
-        if(prediction[0][0]==1):
+        prediction = parse_model_xception(prediction, filename[0])
+        if(prediction==1):
             return 'Xception: Apariencia atípica de COVID 19'
-        elif(prediction[0][1]==1):
-            return 'Xception: Apariencia indeterminada de COVID 19'
-        elif(prediction[0][2]==1):
+        elif(prediction==2):
             return 'Xception: Negativo para COVID 19'
-        elif(prediction[0][3]==1):
-            return 'Xception: Apariencia típica de COVID19'
+        elif(prediction==3):
+            return 'Xception: Apariencia indeterminada de COVID 19'
+        elif(prediction==4):
+            return 'Xception: Positivo para COVID19'
         
-    elif(len(filename[0]<0)):
+    elif(filename and len(filename[0]<0)):
         raise dash.exceptions.PreventUpdate
 
 @app.callback(Output('final-prediction-yolo', 'children'),
@@ -187,13 +277,11 @@ def make_prediction_yolo(filename, value):
     # print(filename[0])
     # if filename is None:
     #     raise dash.exceptions.PreventUpdate
-    if(len(filename[0])>0):
-        print(filename[0])
+    if(filename and  len(filename[0])>0):
         test_image = image.load_img(filename[0], target_size=(IMG_SIZE, IMG_SIZE))
         test_image = image.img_to_array(test_image)
         test_image = np.expand_dims(test_image, axis=0)
         prediction = myModel_yolo.predict(test_image)
-        print(prediction[0])
         if(prediction[0][0]==1):
             return 'YoloV5: Apariencia atípica de COVID 19'
         elif(prediction[0][1]==1):
@@ -203,7 +291,7 @@ def make_prediction_yolo(filename, value):
         elif(prediction[0][3]==1):
             return 'YoloV5: Apariencia típica de COVID19'
         
-    elif(len(filename[0]<0)):
+    elif(filename and  len(filename[0]<0)):
         raise dash.exceptions.PreventUpdate
         
 

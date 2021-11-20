@@ -189,7 +189,7 @@ def parse_contents(contents, filename, date):
 
 def parse_model_xception(prediction, model):
     result = 0
-    if(ord(model[0])==112):                 #Es positivo
+    if(ord(model[0])==112):                
             return 4
     for value in model[0:4]:
         result += ord(value)
